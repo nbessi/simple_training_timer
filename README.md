@@ -7,7 +7,7 @@ It uses terminal beep, and font size. Edit/create a terminal profile that fits y
 
 Usage
 =====
-``
+```
 python timer.py [-h] [-n NB_ROUND] [-l ROUND_DURATION] [-r REST_ROUND_DURATION]
 
 optional arguments:
@@ -17,4 +17,4 @@ optional arguments:
   -r REST_ROUND_DURATION
                         Lenght of rest rounds in seconds. If not set no rest
                         round will be launched
-``
+```
