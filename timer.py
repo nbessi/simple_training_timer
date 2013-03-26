@@ -19,7 +19,9 @@
 #
 ##############################################################################
 import sys
+import platform
 import time
+import subprocess
 from datetime import timedelta
 import curses
 
@@ -28,12 +30,13 @@ class TrainingTimer(object):
     """Ncurses boxing/cardio trainer timer"""
 
     def __init__(self, round_total=10, round_duration=60,
-                 rest_round_duration=30):
+                 rest_round_duration=30, play_wav=False):
         """
         Arguments:
         - `round_duration`: duration of a round in seconds
         - `total_round`: total amount of round
         - `rest_round_duration`: rest round duration in seconds
+        - `paly_wav`: play boxing bell sound instead of using terminal bell
         """
         self._round_duration = round_duration
         self._round_total = round_total if round_total else 1
@@ -42,10 +45,24 @@ class TrainingTimer(object):
         self.init_screen()  # We start ncurses
         self._RED = 1
         self._GREEN = 2
+        self._play_wav = play_wav
+        self._system = platform.system()
 
     def beep(self):
         """Performe a naive terminal beep"""
-        sys.stdout.write("\a")
+        if self._play_wav:
+            if self._system == 'Linux':
+                subprocess.Popen(["aplay", "-q", "boxing_bell.wav"],
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT)
+            elif self._system == 'Darwin':
+                subprocess.Popen(["afplay", "boxing_bell.wav"],
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT)
+            else:
+                sys.stdout.write("\a")
+        else:
+            sys.stdout.write("\a")
 
     def init_screen(self):
         """Initialise ncurses screen"""
@@ -87,7 +104,12 @@ class TrainingTimer(object):
                                 str(timedelta(seconds=second)),
                                 color_indice)
                 time.sleep(1)
-        self.beep()
+        if current_round == round_total:
+            for i in xrange(3):
+                self.beep()
+                time.sleep(0.3)
+        else:
+            self.beep()
 
     def start_timers(self):
         """Run all rounds and rest rest rounds timer.
@@ -119,9 +141,11 @@ if __name__ == '__main__':
     parser.add_argument('-r', type=int, default=0, dest='rest_round_duration',
                         help='Lenght of rest rounds in seconds.\n'
                              'If not set no rest round will be launched')
+    parser.add_argument('-p', '--play', action='store_true',
+                        help='Will use aplay or afplay')
     args = parser.parse_args()
 
     timer = TrainingTimer(args.nb_round, args.round_duration,
-                          args.rest_round_duration)
+                          args.rest_round_duration, args.play)
     timer.start_timers()
     timer.terminate_screen()
